@@ -1,0 +1,9 @@
+*
+
+!Makefile
+!/src
+!/src/*.c
+!/include
+!/include/*.h
+!.gitignore
+!/libft
