@@ -7,3 +7,5 @@
 !/include/*.h
 !.gitignore
 !/libft
+!README.md
+!.devcontainer
