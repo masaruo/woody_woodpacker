@@ -1,3 +1,7 @@
 [submodule "libft"]
 	path = libft
 	url = git@github.com:masaruo/libft.git
+[submodule "c_cpp_env"]
+	path = c_cpp_env
+	url = git@github.com:masaruo/c_cpp_env.gitear
+	
