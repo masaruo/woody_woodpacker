@@ -51,6 +51,9 @@ debug: fclean
 valgrind: fclean
 	$(MAKE) VALGRIND=true
 
-- include $(DEP)
+docker:
+	docker container exec -it woody_woodpacker bash
+
+-include $(DEP)
 
 .PHONY: all clean fclean re debug valgrind
