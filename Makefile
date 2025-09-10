@@ -1,16 +1,15 @@
-NAME := ft_malcolm
+NAME := woody_woodpacker
 CC := cc
-CPPFLAGS := -I./include -I./libft/include -I./printf
+CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS := 
 LIBFT := ./libft/libft.a
-PRINTF := ./printf/libftprintf.a
-SRC := main.c
+SRC := main.c header.c
 OBJDIR := ./obj
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 DEP := $(SRC:%.c=$(OBJDIR)/%.d)
 
-vpath %.c ./src ./src/utils
+vpath %.c ./src
 
 ifeq ($(DEBUG), true)
 	CFLAGS += -ggdb -O0 -fsanitize=address,undefined

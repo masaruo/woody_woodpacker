@@ -1,0 +1,63 @@
+#include "header.h"
+#include <stdbool.h>
+#include "libft.h"
+
+static bool	is_valid_elf_eident(unsigned char e_ident[])
+{
+	if (e_ident[EI_MAG0] != ELFMAG0 || e_ident[EI_MAG1] != ELFMAG1 || e_ident[EI_MAG2] != ELFMAG2 || e_ident[EI_MAG3] != ELFMAG3)
+		return (false);
+	if (e_ident[EI_CLASS] != ELFCLASS64)// only 64bits
+		return (false);
+	if (e_ident[EI_DATA] != ELFDATA2LSB)// only little endien
+		return (false);
+	if (e_ident[EI_VERSION] != EV_CURRENT)
+		return (false);
+	return (true);
+}
+
+static bool is_valid_elf_header(Elf64_Ehdr const * const header)
+{
+	bool const	is_eident_valid = is_valid_elf_eident(header->e_ident);
+	if (!is_eident_valid)
+		return (false);
+
+	if (header->e_type != ET_EXEC && header->e_type != ET_DYN)// only executable
+		return (false);
+	if (header->e_version != EV_CURRENT)
+		return (false);
+	return (true);
+}
+
+int get_elf_header(char const * const file, Elf64_Ehdr *elf_header, __off_t len)
+{
+	if (len < sizeof(Elf64_Ehdr))
+		return (-1);
+	ft_memmove(elf_header, file, sizeof(Elf64_Ehdr));
+
+	if (!is_valid_elf_header(elf_header))
+		return (-1);
+	return (0);
+}
+
+int	get_text_header(char const * const file, Elf64_Phdr *text_header, Elf64_Ehdr const * const elf_header, __off_t len)
+{
+	Elf64_Off const	product_header_start = elf_header->e_phoff;
+	uint16_t const	number_of_headers = elf_header->e_phnum;
+	uint16_t const	size_of_each_header = elf_header->e_phentsize;
+	size_t const	total_size_of_pheader = number_of_headers * size_of_each_header;
+
+	for (size_t i = 0; i < number_of_headers; i++)
+	{
+		Elf64_Phdr		crnt;
+		Elf64_Off const	offset = product_header_start + (i * size_of_each_header);
+		if (offset > len)
+			return (-1);
+		ft_memmove(&crnt, file + offset, size_of_each_header);
+		if (crnt.p_type == PT_LOAD && crnt.p_flags & PF_X && crnt.p_flags & PF_R)// PT_LOAD = ロード可能セグメント PF_X = 実行可能 PF_R = 読み取り可能
+		{
+			*text_header = crnt;
+			return (0);
+		}
+	}
+	return (-1);
+}
