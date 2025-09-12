@@ -2,55 +2,79 @@
 #include <fcntl.h>//open
 #include <sys/mman.h>//mmap
 #include <unistd.h>//lseek
+#include <sys/stat.h>//S_IREAD
 
 #include "header.h"
+#include "utility.h"
 
 int packer(char const * const file_name)
 {
-	char		*file = NULL;
-	int			fd = -1;
+	char		*packed = NULL;
+	int			orig_fd = -1;
+	int			packed_fd = -1;
 	off_t		len = 0;
 	Elf64_Ehdr	elf_header;
 	Elf64_Phdr	text_header;
 
-	fd = open(file_name, O_RDONLY);
-	if (fd == -1)
+	orig_fd = open(file_name, O_RDONLY);
+	if (orig_fd == -1)
 	{
 		perror("");
 		return (1);
 	}
+	
+	packed_fd = open("woody", O_WRONLY | O_TRUNC | O_CREAT, __S_IREAD | __S_IWRITE);
+	if (packed_fd == -1)
+	{
+		perror("");
+		close(orig_fd);
+		return (1);
+	}
 
-	len = lseek(fd, 0, SEEK_END);
+	int res = copy_file(packed_fd, orig_fd);
+	close(orig_fd);
+	if (res == -1)
+	{
+		perror("");
+		close(packed_fd);
+		return (1);
+	}
+
+	len = lseek(packed_fd, 0, SEEK_END);
 	if (len == -1)
 	{
+		close(packed_fd);
 		perror("");
 		return (1);
 	}
 
-	file = mmap(NULL, (size_t)len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-	if (file == MAP_FAILED)
+	packed = mmap(NULL, (size_t)len, PROT_READ | PROT_WRITE, MAP_PRIVATE, packed_fd, 0);
+	if (packed == MAP_FAILED)
 	{
+		close(packed_fd);
 		perror("");
 		return (1);
 	}
-	close(fd);
+
 
 	//todo parse elf file
-	if ((get_elf_header(file, &elf_header, len)) == -1)
+	if ((get_elf_header(packed, &elf_header, len)) == -1)
 	{
 		perror("");
 		return (1);
 	}
-	if ((get_text_header(file, &text_header, &elf_header, len)) == -1)
+	if ((get_text_header(packed, &text_header, &elf_header, len)) == -1)
 	{
 		perror("");
 		return (1);
 	}
+
+
 	//todo compress .text
 	//todo inject decompress
 	//todo modify elf header for new entry point
 
-	int res_munmap = munmap(file, len);
+	int res_munmap = munmap(packed, len);
 	if (res_munmap == -1)
 	{
 		perror("");
