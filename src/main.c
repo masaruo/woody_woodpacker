@@ -23,7 +23,7 @@ int packer(char const * const file_name)
 		return (1);
 	}
 	
-	packed_fd = open("woody", O_WRONLY | O_TRUNC | O_CREAT, __S_IREAD | __S_IWRITE);
+	packed_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
 	if (packed_fd == -1)
 	{
 		perror("");
@@ -48,14 +48,14 @@ int packer(char const * const file_name)
 		return (1);
 	}
 
-	packed = mmap(NULL, (size_t)len, PROT_READ | PROT_WRITE, MAP_PRIVATE, packed_fd, 0);
+	packed = mmap(NULL, (size_t)len, PROT_READ | PROT_WRITE, MAP_SHARED, packed_fd, 0);
+	close(packed_fd);
 	if (packed == MAP_FAILED)
 	{
 		close(packed_fd);
 		perror("");
 		return (1);
 	}
-
 
 	//todo parse elf file
 	if ((get_elf_header(packed, &elf_header, len)) == -1)
