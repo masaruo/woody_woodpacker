@@ -6,12 +6,14 @@
 
 #include "header.h"
 #include "utility.h"
+#include "encode.h"
+#include "decode.h"
 
 int packer(char const * const file_name)
 {
-	char		*packed = NULL;
+	char		*woody = NULL;
 	int			orig_fd = -1;
-	int			packed_fd = -1;
+	int			woody_fd = -1;
 	off_t		len = 0;
 	Elf64_Ehdr	elf_header;
 	Elf64_Phdr	text_header;
@@ -23,58 +25,58 @@ int packer(char const * const file_name)
 		return (1);
 	}
 	
-	packed_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
-	if (packed_fd == -1)
+	woody_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
+	if (woody_fd == -1)
 	{
 		perror("");
 		close(orig_fd);
 		return (1);
 	}
 
-	int res = copy_file(packed_fd, orig_fd);
+	int res = copy_file(woody_fd, orig_fd);
 	close(orig_fd);
 	if (res == -1)
 	{
 		perror("");
-		close(packed_fd);
+		close(woody_fd);
 		return (1);
 	}
 
-	len = lseek(packed_fd, 0, SEEK_END);
+	len = lseek(woody_fd, 0, SEEK_END);
 	if (len == -1)
 	{
-		close(packed_fd);
+		close(woody_fd);
 		perror("");
 		return (1);
 	}
 
-	packed = mmap(NULL, (size_t)len, PROT_READ | PROT_WRITE, MAP_SHARED, packed_fd, 0);
-	close(packed_fd);
-	if (packed == MAP_FAILED)
+	woody = mmap(NULL, (size_t)len, PROT_READ | PROT_WRITE, MAP_SHARED, woody_fd, 0);
+	close(woody_fd);
+	if (woody == MAP_FAILED)
 	{
-		close(packed_fd);
+		close(woody_fd);
 		perror("");
 		return (1);
 	}
 
-	//todo parse elf file
-	if ((get_elf_header(packed, &elf_header, len)) == -1)
-	{
-		perror("");
-		return (1);
-	}
-	if ((get_text_header(packed, &text_header, &elf_header, len)) == -1)
+	if ((get_elf_header(woody, &elf_header, len)) == -1)
 	{
 		perror("");
 		return (1);
 	}
+	if ((get_text_header(woody, &text_header, &elf_header, len)) == -1)
+	{
+		perror("");
+		return (1);
+	}
 
-
+	encoder(woody, &elf_header, &text_header);
+	decoder(woody, &elf_header, &text_header);
 	//todo compress .text
 	//todo inject decompress
 	//todo modify elf header for new entry point
 
-	int res_munmap = munmap(packed, len);
+	int res_munmap = munmap(woody, len);
 	if (res_munmap == -1)
 	{
 		perror("");

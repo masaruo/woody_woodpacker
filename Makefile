@@ -1,21 +1,28 @@
 NAME := woody_woodpacker
 CC := cc
+ASM := nasm
+ASMFLAGS := -f elf64
 CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS := 
 LIBFT := ./libft/libft.a
-SRC := main.c header.c utility.c
+SRC := main.c header.c utility.c encode.c decode.c
+ASM_SRC := decode_asm.s
 OBJDIR := ./obj
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
+ASM_OBJ := $(ASM_SRC:%.s=$(OBJDIR)/%.o)
 DEP := $(SRC:%.c=$(OBJDIR)/%.d)
 
 vpath %.c ./src
+vpath %.s ./src
 
 ifeq ($(DEBUG), true)
 	CFLAGS += -ggdb -O0 -fsanitize=address,undefined
+	ASMFLAGS += -g
 	LDFLAGS += -fsanitize=address,undefined
 else ifeq ($(VALGRIND), true)
-	CFLAGS += -g -O0
+	CFLAGS += -ggdb -O0
+	ASMFLAGS += -g
 else
 	CFLAGS += -Werror -pedantic
 endif
@@ -25,8 +32,11 @@ all: $(NAME)
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(NAME): $(OBJ) $(LIBFT)
-	$(CC) $(LDFLAGS) $(OBJ) $(LIBFT) -o $@
+$(OBJDIR)/%.o: %.s | $(OBJDIR)
+	$(ASM) $(ASMFLAGS) $< -o $@
+
+$(NAME): $(OBJ) $(ASM_OBJ) $(LIBFT)
+	$(CC) $(LDFLAGS) $(ASM_OBJ) $(OBJ) $(LIBFT) -o $@
 
 $(OBJDIR):
 	mkdir -p $@
