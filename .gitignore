@@ -2,7 +2,8 @@
 
 !Makefile
 !/src
-!/src/*.c
+!/src/**/*.c
+!/src/**/*.s
 !/include
 !/include/*.h
 !.gitignore
