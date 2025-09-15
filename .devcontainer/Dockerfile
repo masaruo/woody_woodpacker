@@ -36,7 +36,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     ltrace \
     htop \
     nasm \
-    xdd \
+    xxd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN usermod --shell /bin/zsh vscode

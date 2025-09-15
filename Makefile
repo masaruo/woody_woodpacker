@@ -4,7 +4,7 @@ ASM := nasm
 ASMFLAGS := -f elf64
 CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
-LDFLAGS := 
+LDFLAGS :=
 LIBFT := ./libft/libft.a
 SRC := main.c header.c utility.c encode.c decode.c
 ASM_SRC := decode_asm.s
@@ -62,6 +62,9 @@ valgrind: fclean
 
 docker:
 	docker container exec -it woody_woodpacker bash
+
+submodule:
+	git submodule update --init --recursive
 
 -include $(DEP)
 

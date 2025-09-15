@@ -24,7 +24,7 @@ int packer(char const * const file_name)
 		perror("");
 		return (1);
 	}
-	
+
 	woody_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
 	if (woody_fd == -1)
 	{
@@ -71,10 +71,8 @@ int packer(char const * const file_name)
 	}
 
 	encoder(woody, &elf_header, &text_header);
-	decoder(woody, &elf_header, &text_header);
-	//todo compress .text
-	//todo inject decompress
-	//todo modify elf header for new entry point
+	// decoder(woody, &elf_header, &text_header);
+
 
 	int res_munmap = munmap(woody, len);
 	if (res_munmap == -1)
