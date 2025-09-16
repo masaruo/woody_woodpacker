@@ -6,7 +6,7 @@ CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS :=
 LIBFT := ./libft/libft.a
-SRC := main.c header.c utility.c encode.c decode.c
+SRC := main.c header.c utility.c encode.c inject.c
 ASM_SRC := decode_asm.s
 OBJDIR := ./obj
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)

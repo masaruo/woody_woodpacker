@@ -14,7 +14,9 @@
 1. ELFファイル・ヘッダの修正
 1. パック済みプログラムの書き出し
 
-
+## decoder_stub creation
+1. `nasm -f bin <file.s>`
+1. `xxd -i <decoder.bin> > decoder_stub.h`
 
 ## refrence
 アナライジング・マルウェア

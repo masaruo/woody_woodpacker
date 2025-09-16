@@ -3,11 +3,13 @@
 #include <sys/mman.h>//mmap
 #include <unistd.h>//lseek
 #include <sys/stat.h>//S_IREAD
+#include <stdlib.h>//free
 
 #include "header.h"
 #include "utility.h"
 #include "encode.h"
-#include "decode.h"
+#include "decoder.h"
+#include "inject.h"
 
 int packer(char const * const file_name)
 {
@@ -17,6 +19,8 @@ int packer(char const * const file_name)
 	off_t		len = 0;
 	Elf64_Ehdr	elf_header;
 	Elf64_Phdr	text_header;
+	char		*decoder_stub_data = (char*) src_decoder_bin;
+	size_t const		decoder_bin_len = src_decoder_bin_len;
 
 	orig_fd = open(file_name, O_RDONLY);
 	if (orig_fd == -1)
@@ -71,15 +75,23 @@ int packer(char const * const file_name)
 	}
 
 	encoder(woody, &elf_header, &text_header);
-	// decoder(woody, &elf_header, &text_header);
 
+	char *newfile = injector(&woody, len, &elf_header, decoder_stub_data, decoder_bin_len);
+	if (newfile == NULL)
+	{
+		perror("");
+		free(woody);
+		return(1);
+	}
 
-	int res_munmap = munmap(woody, len);
+	int res_munmap = munmap(woody, len);//len is different. just return new woody from injector
 	if (res_munmap == -1)
 	{
 		perror("");
+		free(woody);
 		return (1);
 	}
+	free(woody);
 	return (0);
 }
 
