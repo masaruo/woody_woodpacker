@@ -13,14 +13,14 @@
 
 int packer(char const * const file_name)
 {
-	char		*woody = NULL;
+	char		*content = NULL;
 	int			orig_fd = -1;
-	int			woody_fd = -1;
+	int			new_fd = -1;
 	off_t		len = 0;
 	Elf64_Ehdr	elf_header;
 	Elf64_Phdr	text_header;
-	char		*decoder_stub_data = (char*) src_decoder_bin;
-	size_t const		decoder_bin_len = src_decoder_bin_len;
+	char		*decoder_stub_data = (char*) decode_asm;
+	size_t const		decoder_bin_len = decode_asm_len;
 
 	orig_fd = open(file_name, O_RDONLY);
 	if (orig_fd == -1)
@@ -29,69 +29,58 @@ int packer(char const * const file_name)
 		return (1);
 	}
 
-	woody_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
-	if (woody_fd == -1)
-	{
-		perror("");
-		close(orig_fd);
-		return (1);
-	}
-
-	int res = copy_file(woody_fd, orig_fd);
-	close(orig_fd);
-	if (res == -1)
-	{
-		perror("");
-		close(woody_fd);
-		return (1);
-	}
-
-	len = lseek(woody_fd, 0, SEEK_END);
+	len = lseek(orig_fd, 0, SEEK_END);
 	if (len == -1)
 	{
-		close(woody_fd);
+		close(orig_fd);
 		perror("");
 		return (1);
 	}
 
-	woody = mmap(NULL, (size_t)len, PROT_READ | PROT_WRITE, MAP_SHARED, woody_fd, 0);
-	close(woody_fd);
-	if (woody == MAP_FAILED)
-	{
-		close(woody_fd);
-		perror("");
-		return (1);
-	}
-
-	if ((get_elf_header(woody, &elf_header, len)) == -1)
-	{
-		perror("");
-		return (1);
-	}
-	if ((get_text_header(woody, &text_header, &elf_header, len)) == -1)
+	content = mmap(NULL, (size_t)len, PROT_WRITE | PROT_READ, MAP_PRIVATE, orig_fd, 0);
+	close(orig_fd);
+	if (content == MAP_FAILED)
 	{
 		perror("");
 		return (1);
 	}
 
-	encoder(woody, &elf_header, &text_header);
-
-	char *newfile = injector(&woody, len, &elf_header, decoder_stub_data, decoder_bin_len);
-	if (newfile == NULL)
+	if ((get_elf_header(content, &elf_header, len)) == -1)
 	{
 		perror("");
-		free(woody);
-		return(1);
-	}
-
-	int res_munmap = munmap(woody, len);//len is different. just return new woody from injector
-	if (res_munmap == -1)
-	{
-		perror("");
-		free(woody);
 		return (1);
 	}
-	free(woody);
+	if ((get_text_header(content, &text_header, &elf_header, len)) == -1)
+	{
+		perror("");
+		return (1);
+	}
+
+	encoder(content, &elf_header, &text_header);
+
+	size_t woody_size = injector(&content, len, &elf_header, decoder_stub_data, decoder_bin_len);
+	if (woody_size == 0)
+	{
+		perror("");
+		return (1);
+	}
+
+	new_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
+	if (new_fd == -1)
+	{
+		perror("");
+		free(content);
+		return (1);
+	}
+
+	ssize_t	copy_res = write_to_fd(new_fd, content, woody_size);
+	close(new_fd);
+	if (copy_res == -1)
+	{
+		perror("");
+		return (1);
+	}
+
 	return (0);
 }
 

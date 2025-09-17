@@ -1,4 +1,4 @@
-#ifndef _ENCODE_HP
+#ifndef _ENCODE_H_
 # define _ENCODE_H_
 # include <elf.h>
 

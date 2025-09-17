@@ -1,16 +1,13 @@
 NAME := woody_woodpacker
 CC := cc
-ASM := nasm
-ASMFLAGS := -f elf64
 CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS :=
 LIBFT := ./libft/libft.a
 SRC := main.c header.c utility.c encode.c inject.c
-ASM_SRC := decode_asm.s
+ASM_SRC := decode.s
 OBJDIR := ./obj
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
-ASM_OBJ := $(ASM_SRC:%.s=$(OBJDIR)/%.o)
 DEP := $(SRC:%.c=$(OBJDIR)/%.d)
 
 vpath %.c ./src
@@ -32,10 +29,7 @@ all: $(NAME)
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.o: %.s | $(OBJDIR)
-	$(ASM) $(ASMFLAGS) $< -o $@
-
-$(NAME): $(OBJ) $(ASM_OBJ) $(LIBFT)
+$(NAME): $(OBJ) $(LIBFT)
 	$(CC) $(LDFLAGS) $(ASM_OBJ) $(OBJ) $(LIBFT) -o $@
 
 $(OBJDIR):
@@ -65,6 +59,9 @@ docker:
 
 submodule:
 	git submodule update --init --recursive
+
+asm:
+	nasm -f bin ./src/decode.s
 
 -include $(DEP)
 
