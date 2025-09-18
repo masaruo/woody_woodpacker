@@ -36,27 +36,27 @@ t_payload	create_payload(char const * const orig_content, Elf64_Ehdr const * con
 	return(payload);
 }
 
-static Elf64_Addr	find_last_load_address(char const * const orig_content)
-{
-	Elf64_Ehdr	*elf_header = (Elf64_Ehdr*)orig_content;
-	char const	*header_head = orig_content + elf_header->e_phoff;
-	Elf64_Addr	max_addr = 0;
+// static Elf64_Addr	find_last_load_address(char const * const orig_content)
+// {
+// 	Elf64_Ehdr	*elf_header = (Elf64_Ehdr*)orig_content;
+// 	char const	*header_head = orig_content + elf_header->e_phoff;
+// 	Elf64_Addr	max_addr = 0;
 
-	for (size_t i = 0; i < elf_header->e_phnum; i++)
-	{
-		Elf64_Phdr	crnt_header;
-		ft_memmove(&crnt_header, header_head + (i * elf_header->e_phentsize), sizeof(Elf64_Phdr));
-		if (crnt_header.p_type == PT_LOAD)
-		{
-			Elf64_Addr const current_end_addr = crnt_header.p_vaddr + crnt_header.p_memsz;
-			if (current_end_addr > max_addr)
-			{
-				max_addr = current_end_addr;
-			}
-		}
-	}
-	return (max_addr);
-}
+// 	for (size_t i = 0; i < elf_header->e_phnum; i++)
+// 	{
+// 		Elf64_Phdr	crnt_header;
+// 		ft_memmove(&crnt_header, header_head + (i * elf_header->e_phentsize), sizeof(Elf64_Phdr));
+// 		if (crnt_header.p_type == PT_LOAD)
+// 		{
+// 			Elf64_Addr const current_end_addr = crnt_header.p_vaddr + crnt_header.p_memsz;
+// 			if (current_end_addr > max_addr)
+// 			{
+// 				max_addr = current_end_addr;
+// 			}
+// 		}
+// 	}
+// 	return (max_addr);
+// }
 
 void	hijack_headers(char *orig_content, Elf64_Off note_header_offset, size_t orig_len)
 {

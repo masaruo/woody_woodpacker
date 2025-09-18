@@ -6,7 +6,7 @@ CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS :=
 LIBFT := ./libft/libft.a
-SRC := main.c header.c utility.c encode.c inject.c
+SRC := main.c parser.c utility.c
 ASM_SRC := decode.s
 OBJDIR := ./obj
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
@@ -57,7 +57,7 @@ valgrind: fclean
 	$(MAKE) VALGRIND=true
 
 docker:
-	docker container exec -it woody_woodpacker bash
+	docker container exec -it --user 1000 woody_woodpacker bash
 
 submodule:
 	git submodule update --init --recursive

@@ -1,5 +1,7 @@
 #include <unistd.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 ssize_t	write_to_fd(int dst_fd, char *src, size_t len)
 {
@@ -32,3 +34,9 @@ ssize_t	write_to_fd(int dst_fd, char *src, size_t len)
 // 		return (-1);
 // 	return(0);
 // }
+
+void	perror_exit(int exit_code, char *msg)
+{
+	perror(msg);
+	exit(exit_code);
+}
