@@ -13,14 +13,15 @@
 
 int packer(char const * const file_name)
 {
-	char		*content = NULL;
+	char		*orig_content = NULL;
+	char		*injected = NULL;
 	int			orig_fd = -1;
 	int			new_fd = -1;
 	off_t		len = 0;
 	Elf64_Ehdr	elf_header;
-	Elf64_Phdr	text_header;
-	char		*decoder_stub_data = (char*) decode_asm;
-	size_t const		decoder_bin_len = decode_asm_len;
+	Elf64_Off	exec_header_offset;
+	Elf64_Off	note_header_offset;
+	t_payload	payload;
 
 	orig_fd = open(file_name, O_RDONLY);
 	if (orig_fd == -1)
@@ -37,30 +38,37 @@ int packer(char const * const file_name)
 		return (1);
 	}
 
-	content = mmap(NULL, (size_t)len, PROT_WRITE | PROT_READ, MAP_PRIVATE, orig_fd, 0);
+	orig_content = mmap(NULL, (size_t)len, PROT_WRITE | PROT_READ, MAP_PRIVATE, orig_fd, 0);
 	close(orig_fd);
-	if (content == MAP_FAILED)
+	if (orig_content == MAP_FAILED)
 	{
 		perror("");
 		return (1);
 	}
 
-	if ((get_elf_header(content, &elf_header, len)) == -1)
+	if ((get_elf_header(orig_content, &elf_header, len)) == -1)
 	{
-		perror("");
-		return (1);
-	}
-	if ((get_text_header(content, &text_header, &elf_header, len)) == -1)
-	{
+		//todo munmap
 		perror("");
 		return (1);
 	}
 
-	encoder(content, &elf_header, &text_header);
-
-	size_t woody_size = injector(&content, len, &elf_header, decoder_stub_data, decoder_bin_len);
-	if (woody_size == 0)
+	if ((get_segment_headers(orig_content, &exec_header_offset, &note_header_offset, &elf_header, len)) == -1)
 	{
+		//todo munmap
+		perror("");
+		return (1);
+	}
+
+	encoder(orig_content, &elf_header, exec_header_offset);
+
+	hijack_headers(orig_content, note_header_offset, len);
+	payload = create_payload(orig_content, &elf_header, exec_header_offset);
+	size_t total_len = create_stub_injected_file(orig_content, &injected, len, payload);
+	int munmap_success = munmap(orig_content, len);
+	if (!injected || munmap_success == -1)
+	{
+		free(injected);
 		perror("");
 		return (1);
 	}
@@ -68,19 +76,19 @@ int packer(char const * const file_name)
 	new_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
 	if (new_fd == -1)
 	{
+		free (injected);
 		perror("");
-		free(content);
 		return (1);
 	}
 
-	ssize_t	copy_res = write_to_fd(new_fd, content, woody_size);
+	ssize_t	copy_res = write_to_fd(new_fd, injected, total_len);
 	close(new_fd);
+	free(injected);
 	if (copy_res == -1)
 	{
 		perror("");
 		return (1);
 	}
-
 	return (0);
 }
 

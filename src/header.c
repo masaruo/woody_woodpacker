@@ -39,25 +39,35 @@ int get_elf_header(char const * const file, Elf64_Ehdr *elf_header, __off_t len)
 	return (0);
 }
 
-int	get_text_header(char const * const file, Elf64_Phdr *text_header, Elf64_Ehdr const * const elf_header, __off_t len)
+int	get_segment_headers(char const * const file, Elf64_Off *exec_header_offset, Elf64_Off *note_header_offset, Elf64_Ehdr const * const elf_header, __off_t len)
 {
 	Elf64_Off const	product_header_start = elf_header->e_phoff;
 	uint16_t const	number_of_headers = elf_header->e_phnum;
 	uint16_t const	size_of_each_header = elf_header->e_phentsize;
-	size_t const	total_size_of_pheader = number_of_headers * size_of_each_header;
+	bool			exec_found = false;
+	bool			note_found = false;
 
 	for (size_t i = 0; i < number_of_headers; i++)
 	{
 		Elf64_Phdr		crnt;
 		Elf64_Off const	offset = product_header_start + (i * size_of_each_header);
-		if (offset > len)
+		if (offset + size_of_each_header > len)
 			return (-1);
 		ft_memmove(&crnt, file + offset, size_of_each_header);
 		if (crnt.p_type == PT_LOAD && crnt.p_flags & PF_X && crnt.p_flags & PF_R)// PT_LOAD = ロード可能セグメント PF_X = 実行可能 PF_R = 読み取り可能
 		{
-			*text_header = crnt;
-			return (0);
+			*exec_header_offset = product_header_start + (i * size_of_each_header);
+			exec_found = true;
+		}
+		else if (crnt.p_type == PT_NOTE)
+		{
+			*note_header_offset = product_header_start + (i * size_of_each_header);
+			note_found = true;
 		}
 	}
-	return (-1);
+
+	if (exec_found && note_found)
+		return (0);
+	else
+		return (-1);
 }

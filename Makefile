@@ -1,5 +1,7 @@
 NAME := woody_woodpacker
 CC := cc
+ASM := nams
+ASMFLAGS := -g -f elf64
 CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS :=
