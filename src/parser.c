@@ -79,6 +79,7 @@ static int	fill_content(t_content *content)
 			Elf64_Off	end_addr = crnt->p_vaddr + crnt->p_memsz;
 			if (end_addr > max_addr)
 			{
+				max_addr = end_addr;
 				content->last_load_header = crnt;
 				content->last_load_header_offset = crnt_offset;
 			}

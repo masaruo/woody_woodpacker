@@ -3,13 +3,14 @@
 #include "libft.h"
 #include "utility.h"
 
-static t_payload	create_payload(t_content const * const data)
+static t_payload	create_payload(t_content const * const content)
 {
 	t_payload	payload;
 
-	payload.executable_segment_addr = data->executable_header->p_vaddr;
-	payload.executable_segment_size = data->executable_header->p_memsz;
-	payload.original_entry_point = data->original_entry_point;
+	payload.executable_segment_addr = content->executable_header->p_vaddr;
+	payload.executable_segment_size = content->executable_header->p_memsz;
+	payload.original_entry_point = content->original_entry_point;
+    payload.stub_vaddr = content->last_load_header->p_vaddr + content->last_load_header->p_filesz;
 	//todo payload key
 	return (payload);
 }
@@ -35,15 +36,24 @@ static void update_headers(char *head, t_content const * const content, size_t a
     Elf64_Ehdr          *elf_header = (Elf64_Ehdr*)head;
     Elf64_Phdr          *exec_header = (Elf64_Phdr*)(head + content->executable_header_offset);
     Elf64_Phdr          *last_load_header = (Elf64_Phdr*)(head + content->last_load_header_offset);
-    Elf64_Addr const    new_entry_point = content->last_load_header->p_vaddr + content->last_load_header->p_memsz;
+    Elf64_Addr const    new_entry_point = content->last_load_header->p_vaddr + content->last_load_header->p_filesz;//?
 
     // --- デバッグ用PRINTFを追加 ---
+    printf("Last LOAD: vaddr=0x%lx, filesz=0x%lx, memsz=0x%lx\n",
+       content->last_load_header->p_vaddr,
+       content->last_load_header->p_filesz,
+       content->last_load_header->p_memsz);
+printf("Calculated entry point: 0x%lx\n", new_entry_point);
     printf("--- Updating Headers ---\n");
     printf("Additional size to add: 0x%zx (%zu bytes)\n", additional_size, additional_size);
 
     printf("Original Entry Point: 0x%lx\n", elf_header->e_entry);
     elf_header->e_entry = new_entry_point;
     printf("New Entry Point:      0x%lx\n", elf_header->e_entry);
+
+    elf_header->e_shoff = 0;
+    elf_header->e_shnum = 0;
+    elf_header->e_shstrndx = 0;
 
     printf("Original LastLoad FileSiz: 0x%lx\n", last_load_header->p_filesz);
     last_load_header->p_filesz += additional_size;

@@ -21,6 +21,7 @@ typedef struct s_payload
 	uint64_t	executable_segment_addr;
 	uint64_t	executable_segment_size;
 	uint64_t	original_entry_point;
+	uint64_t	stub_vaddr;
 	// uint64_t	key_addrs;
 }	t_payload;
 

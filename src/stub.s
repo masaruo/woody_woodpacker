@@ -13,7 +13,8 @@ default rel
 %define executable_addr_offset 0
 %define executable_size_offset 8
 %define original_entry_point_offset 16
-;%define key_addr_offset 24
+%define stub_vaddr 24
+;%define key_addr_offset 32
 %define STUB_SIZE (end_of_stub - _start)
 
 global _start
@@ -22,10 +23,11 @@ section .text
 
 _start:
 	lea	r12, [rel _start] ; runtime address of _start
-	sub r12, _start ; subtract compile time address to have base address
+	lea	r9, [rel _start + STUB_SIZE]; *r9 points to payload*
+	mov	rax, [r9 + stub_vaddr]
+	sub r12, rax
 
 prepare_decrypt:
-	lea	r9, [rel _start + STUB_SIZE]; *r9 points to payload*
 	mov	r11, [r9 + executable_addr_offset]
 	mov rcx, [r9 + executable_size_offset]
 	add	r11, r12
