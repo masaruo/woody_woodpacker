@@ -51,13 +51,14 @@ static bool	is_valid_elf_header(t_content const * const content)
 static int	fill_content(t_content *content)
 {
 	content->elf_header = (Elf64_Ehdr*)content->head;
+	content->original_entry_point = content->elf_header->e_entry;
 
 	Elf64_Ehdr const	*ehdr = content->elf_header;
 	Elf64_Off const		phdr_offset = ehdr->e_phoff;
 	uint16_t const		phnum = ehdr->e_phnum;
 	uint16_t const		phentsize = ehdr->e_phentsize;
 	bool				executable_found = false;
-	bool				note_found = false;
+	Elf64_Addr			max_addr = 0;
 
 	for (size_t i = 0; i < phnum; i++)
 	{
@@ -72,21 +73,23 @@ static int	fill_content(t_content *content)
 			if (crnt->p_flags & PF_X && crnt->p_flags & PF_R)
 			{
 				content->executable_header = crnt;
+				content->executable_header_offset = crnt_offset;
 				executable_found = true;
 			}
 			Elf64_Off	end_addr = crnt->p_vaddr + crnt->p_memsz;
-			if (end_addr > content->last_load_address)
+			if (end_addr > max_addr)
 			{
-				content->last_load_address = end_addr;
+				content->last_load_header = crnt;
+				content->last_load_header_offset = crnt_offset;
 			}
 		}
-		else if (crnt->p_type == PT_NOTE)
-		{
-			content->note_header = crnt;
-			note_found = true;
-		}
+		// else if (crnt->p_type == PT_NOTE)
+		// {
+		// 	content->note_header = crnt;
+		// 	note_found = true;
+		// }
 	}
-	if (!executable_found || !note_found)
+	if (!executable_found)
 		return (-1);
 	else
 		return (0);
@@ -94,7 +97,7 @@ static int	fill_content(t_content *content)
 
 t_content	get_original_content(char const * const file_name)
 {
-	t_content	original = {NULL, 0, NULL, NULL, NULL, 0};
+	t_content	original = {NULL, 0, NULL, NULL, 0, NULL, 0, 0};
 	int fd;
 
 	fd = open(file_name, O_RDONLY);
