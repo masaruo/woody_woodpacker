@@ -29,6 +29,7 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(NAME): $(OBJ) $(LIBFT)
+	$(MAKE) stub
 	$(CC) $(LDFLAGS) $(ASM_OBJ) $(OBJ) $(LIBFT) -o $@
 
 $(OBJDIR):
@@ -44,6 +45,7 @@ clean:
 fclean: clean
 	$(MAKE) fclean -C ./libft
 	$(RM) $(NAME)
+	$(RM) woody
 
 re: fclean all
 

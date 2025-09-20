@@ -10,66 +10,33 @@ static t_payload	create_payload(t_content const * const content)
 	payload.executable_segment_addr = content->executable_header->p_vaddr;
 	payload.executable_segment_size = content->executable_header->p_memsz;
 	payload.original_entry_point = content->original_entry_point;
-    payload.stub_vaddr = content->last_load_header->p_vaddr + content->last_load_header->p_filesz;
+	payload.stub_vaddr = content->last_load_header->p_vaddr + content->last_load_header->p_filesz;
 	//todo payload key
 	return (payload);
 }
 
-// static void	update_headers(char *head, t_content const * const content, size_t additional_size)
-// {
-
-// 	Elf64_Ehdr			*elf_header = (Elf64_Ehdr*)head;
-// 	Elf64_Phdr			*exec_header = (Elf64_Phdr*)(head + content->executable_header_offset);
-// 	Elf64_Phdr			*last_load_header = (Elf64_Phdr*)(head + content->last_load_header_offset);
-// 	Elf64_Addr const	new_entry_point = last_load_header->p_vaddr + last_load_header->p_memsz;
-
-// 	elf_header->e_entry = new_entry_point;
-// 	exec_header->p_flags |= PF_W;
-// 	last_load_header->p_memsz += additional_size;
-// 	last_load_header->p_filesz += additional_size;
-// 	last_load_header->p_flags |= PF_X;
-// }
-#include <stdio.h> // printfのために追加
-
 static void update_headers(char *head, t_content const * const content, size_t additional_size)
 {
-    Elf64_Ehdr          *elf_header = (Elf64_Ehdr*)head;
-    Elf64_Phdr          *exec_header = (Elf64_Phdr*)(head + content->executable_header_offset);
-    Elf64_Phdr          *last_load_header = (Elf64_Phdr*)(head + content->last_load_header_offset);
-    Elf64_Addr const    new_entry_point = content->last_load_header->p_vaddr + content->last_load_header->p_filesz;//?
+	Elf64_Ehdr			*elf_header = (Elf64_Ehdr*)head;
+	Elf64_Phdr			*exec_header = (Elf64_Phdr*)(head + content->executable_header_offset);
+	Elf64_Phdr			*last_load_header = (Elf64_Phdr*)(head + content->last_load_header_offset);
+	Elf64_Addr const	new_entry_point = content->last_load_header->p_vaddr + content->last_load_header->p_filesz;//?
 
-    // --- デバッグ用PRINTFを追加 ---
-    printf("Last LOAD: vaddr=0x%lx, filesz=0x%lx, memsz=0x%lx\n",
-       content->last_load_header->p_vaddr,
-       content->last_load_header->p_filesz,
-       content->last_load_header->p_memsz);
-printf("Calculated entry point: 0x%lx\n", new_entry_point);
-    printf("--- Updating Headers ---\n");
-    printf("Additional size to add: 0x%zx (%zu bytes)\n", additional_size, additional_size);
+	elf_header->e_entry = new_entry_point;
 
-    printf("Original Entry Point: 0x%lx\n", elf_header->e_entry);
-    elf_header->e_entry = new_entry_point;
-    printf("New Entry Point:      0x%lx\n", elf_header->e_entry);
+	elf_header->e_shoff = 0;
+	elf_header->e_shnum = 0;
+	elf_header->e_shstrndx = 0;
 
-    elf_header->e_shoff = 0;
-    elf_header->e_shnum = 0;
-    elf_header->e_shstrndx = 0;
+	last_load_header->p_filesz += additional_size;
 
-    printf("Original LastLoad FileSiz: 0x%lx\n", last_load_header->p_filesz);
-    last_load_header->p_filesz += additional_size;
-    printf("New LastLoad FileSiz:      0x%lx\n", last_load_header->p_filesz);
+	last_load_header->p_memsz += additional_size;
 
-    printf("Original LastLoad MemSiz:  0x%lx\n", last_load_header->p_memsz);
-    last_load_header->p_memsz += additional_size;
-    printf("New LastLoad MemSiz:       0x%lx\n", last_load_header->p_memsz);
+	last_load_header->p_flags |= PF_X;
 
-    printf("Original LastLoad Flags: 0x%x\n", last_load_header->p_flags);
-    last_load_header->p_flags |= PF_X;
-    printf("New LastLoad Flags:      0x%x\n", last_load_header->p_flags);
-    printf("------------------------\n");
-
-    exec_header->p_flags |= PF_W;
+	exec_header->p_flags |= PF_W;
 }
+
 t_file	create_woody(t_content *content)
 {
 	size_t const				additional_size = __obj_stub_bin_len + sizeof(t_payload);
