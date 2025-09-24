@@ -65,6 +65,12 @@ stub: | $(OBJDIR)
 	nasm -f bin ./src/stub.s -o ./obj/stub.bin
 	xxd -i ./obj/stub.bin > ./include/stub.h
 
+test: fclean
+	$(MAKE) stub
+	$(MAKE) debug
+	./woody_woodpacker resources/sample
+	./woody
+
 -include $(DEP)
 
 .PHONY: all clean fclean re debug valgrind
