@@ -22,7 +22,7 @@ typedef struct s_payload
 	uint64_t	executable_segment_size;
 	uint64_t	original_entry_point;
 	uint64_t	stub_vaddr;
-	// uint64_t	key_addrs;
+	char		key[16];//todo KEYSIZE
 }	t_payload;
 
 typedef struct s_file

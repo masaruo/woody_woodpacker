@@ -2,9 +2,11 @@
 #include <fcntl.h>//close?
 #include <sys/mman.h>//munmap
 #include <unistd.h>//close
+#include <stdlib.h>
 
 #include "utility.h"
-#include "encode.h"
+// #include "encode.h"
+#include "rc4.h"
 
 #include "woody.h"
 #include "parser.h"
@@ -14,11 +16,15 @@ int packer(char const * const file_name)
 {
 	t_content	data;
 	t_file		woody;
+	char		key[KEYSIZE];
 
 	data = get_original_content(file_name);
-	encoder(&data);
+	// encoder(&data);
 
-	woody = create_woody(&data);
+	generate_key(key, KEYSIZE);
+	encrypt(&data, key);
+	woody = create_woody(&data, key);
+
 	int res = munmap(data.head, data.len);
 	if (res == -1)
 	{
@@ -33,6 +39,7 @@ int packer(char const * const file_name)
 	}
 
 	write_to_fd(new_fd, woody.head, woody.len);
+	free(woody.head);
 	close(new_fd);
 	return (0);
 }

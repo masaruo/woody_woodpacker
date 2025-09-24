@@ -2,8 +2,9 @@
 #include "stub.h"
 #include "libft.h"
 #include "utility.h"
+#include "rc4.h"
 
-static t_payload	create_payload(t_content const * const content)
+static t_payload	create_payload(t_content const * const content, char *key)
 {
 	t_payload	payload;
 
@@ -11,7 +12,7 @@ static t_payload	create_payload(t_content const * const content)
 	payload.executable_segment_size = content->executable_header->p_memsz;
 	payload.original_entry_point = content->original_entry_point;
 	payload.stub_vaddr = content->last_load_header->p_vaddr + content->last_load_header->p_filesz;
-	//todo payload key
+	ft_memmove(payload.key, key, KEYSIZE);
 	return (payload);
 }
 
@@ -43,7 +44,7 @@ static void	copy_section_header_table(Elf64_Shdr *shdr, t_content const * const 
 
 }
 
-t_file	create_woody(t_content *content)
+t_file	create_woody(t_content *content, char *key)
 {
 	Elf64_Ehdr					*elf_header = content->elf_header;
 	size_t const				shdr_len = elf_header->e_shentsize * elf_header->e_shnum;
@@ -52,7 +53,7 @@ t_file	create_woody(t_content *content)
 	Elf64_Phdr const * const	lst = content->last_load_header;
 	size_t const				last_addr = lst->p_offset + lst->p_filesz;
 	size_t const				total_size = last_addr + additional_size;
-	t_payload const				payload = create_payload(content);
+	t_payload const				payload = create_payload(content, key);
 	t_file						woody = {NULL, total_size};
 
 	copy_section_header_table(copied_shdr, content, shdr_len);

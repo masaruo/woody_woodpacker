@@ -4,7 +4,7 @@ CPPFLAGS := -I./include -I./libft/include
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS :=
 LIBFT := ./libft/libft.a
-SRC := main.c parser.c utility.c inject.c encode.c
+SRC := main.c parser.c utility.c inject.c rc4.c
 OBJDIR := ./obj
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 DEP := $(SRC:%.c=$(OBJDIR)/%.d)
