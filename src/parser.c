@@ -7,6 +7,7 @@
 #include "woody.h"
 #include "utility.h"
 #include "libft.h"
+// #include "stub.h"
 
 static bool	is_valid_elf_eident(unsigned char e_ident[])
 {
@@ -48,6 +49,24 @@ static bool	is_valid_elf_header(t_content const * const content)
 	return (true);
 }
 
+Elf64_Off	get_aligned_stub_poffset(size_t	original_len)
+{
+	uint64_t	page_size = 0x1000;
+	size_t		new_len = (original_len + page_size - 1) & ~(page_size - 1);
+	return (new_len);
+}
+
+Elf64_Addr	get_stub_vaddr(Elf64_Phdr *last_load_header)
+{
+	Elf64_Addr	max_vaddr_end = last_load_header->p_vaddr + last_load_header->p_memsz;
+	Elf64_Addr	vaddr = 0;
+	uint64_t	page_size = 0x1000;
+
+	// vaddr = (max_vaddr_end + page_size - 1) & ~(page_size - 1);//? what are they doing?
+	vaddr = (max_vaddr_end + page_size - 1) / page_size * page_size;
+	return (vaddr);
+}
+
 static int	fill_content(t_content *content)
 {
 	content->elf_header = (Elf64_Ehdr*)content->head;
@@ -57,12 +76,11 @@ static int	fill_content(t_content *content)
 	Elf64_Off const		phdr_offset = ehdr->e_phoff;
 	uint16_t const		phnum = ehdr->e_phnum;
 	uint16_t const		phentsize = ehdr->e_phentsize;
-	bool				executable_found = false;
 	Elf64_Addr			max_addr = 0;
 
 	for (size_t i = 0; i < phnum; i++)
 	{
-		Elf64_Phdr	*crnt;
+		Elf64_Phdr			*crnt;
 		Elf64_Off	crnt_offset = phdr_offset + (i * phentsize);
 		if (crnt_offset + phentsize > content->len)
 			return (-1);
@@ -73,8 +91,8 @@ static int	fill_content(t_content *content)
 			if (crnt->p_flags & PF_X && crnt->p_flags & PF_R)
 			{
 				content->executable_header = crnt;
+				content->executable_header->p_flags |= PF_W;// in place decryption has to be writable
 				content->executable_header_offset = crnt_offset;
-				executable_found = true;
 			}
 			Elf64_Off	end_addr = crnt->p_vaddr + crnt->p_memsz;
 			if (end_addr > max_addr)
@@ -84,13 +102,8 @@ static int	fill_content(t_content *content)
 				content->last_load_header_offset = crnt_offset;
 			}
 		}
-		// else if (crnt->p_type == PT_NOTE)
-		// {
-		// 	content->note_header = crnt;
-		// 	note_found = true;
-		// }
 	}
-	if (!executable_found)
+	if (!content->executable_header || !content->last_load_header)
 		return (-1);
 	else
 		return (0);
@@ -98,16 +111,18 @@ static int	fill_content(t_content *content)
 
 t_content	get_original_content(char const * const file_name)
 {
-	t_content	original = {NULL, 0, NULL, NULL, 0, NULL, 0, 0};
+	t_content	original = {NULL, 0, NULL, NULL, 0, NULL, 0, 0, 0, 0};
 	int fd;
+	off_t	len = 0;
 
 	fd = open(file_name, O_RDONLY);
 	if (fd == -1)
 		perror_exit(1, "open error");
-	original.len = lseek(fd, 0, SEEK_END);
-	if (original.len == -1)
+	len = lseek(fd, 0, SEEK_END);
+	if (len == -1)
 		perror_exit(1, "lseek eror");
-	original.head = mmap(NULL, (size_t)original.len, PROT_WRITE | PROT_READ, MAP_PRIVATE, fd, 0);
+	original.len = len;
+		original.head = mmap(NULL, (size_t)original.len, PROT_WRITE | PROT_READ, MAP_PRIVATE, fd, 0);
 	if (original.head == MAP_FAILED)
 		perror_exit(1, "mmap failed");
 	close(fd);
@@ -116,5 +131,8 @@ t_content	get_original_content(char const * const file_name)
 	int res = fill_content(&original);
 	if (res == -1)
 		perror_exit(1, "invalid elf pheaders");
+
+	original.stub_vaddr = get_stub_vaddr(original.last_load_header);
+	original.stub_poffset = get_aligned_stub_poffset(original.len);
 	return (original);
 }

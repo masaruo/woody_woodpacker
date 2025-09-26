@@ -63,7 +63,8 @@ submodule:
 
 stub: | $(OBJDIR)
 	nasm -f bin ./src/stub.s -o ./obj/stub.bin
-	xxd -i ./obj/stub.bin > ./include/stub.h
+	echo "#pragma once" > ./include/stub.h
+	xxd -i ./obj/stub.bin >> ./include/stub.h
 
 test: fclean
 	$(MAKE) stub

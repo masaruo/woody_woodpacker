@@ -2,7 +2,7 @@
 #include <fcntl.h>//close?
 #include <sys/mman.h>//munmap
 #include <unistd.h>//close
-#include <stdlib.h>
+#include <stdlib.h>//free
 
 #include "utility.h"
 // #include "encode.h"
@@ -25,13 +25,15 @@ int packer(char const * const file_name)
 	encrypt(&data, key);
 	woody = create_woody(&data, key);
 
+	// woody = create_woody(&data);
+	woody = create_packed_file(&data);
 	int res = munmap(data.head, data.len);
 	if (res == -1)
 	{
 		//todo error
 	}
 
-	int new_fd = open("woody", O_RDWR | O_TRUNC | O_CREAT, 0777);
+	int new_fd = open("woody", O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	if (new_fd == -1)
 	{
 		perror("");
@@ -41,6 +43,7 @@ int packer(char const * const file_name)
 	write_to_fd(new_fd, woody.head, woody.len);
 	free(woody.head);
 	close(new_fd);
+	free(woody.head);
 	return (0);
 }
 
