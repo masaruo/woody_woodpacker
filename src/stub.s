@@ -42,7 +42,6 @@ goto_OEP:
 	mov	r10, [r9 + original_entry_point]		; OEP vaddr
 	add	r10, r12								; actual OEP = vaddr + base_addr
 	call greeting
-	and	rsp, -16								; stack alignment
 	jmp r10									; jmp to OEP
 
 ; --- Function to print a greeting ---

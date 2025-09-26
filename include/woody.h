@@ -14,6 +14,9 @@ typedef struct s_content
 	Elf64_Phdr	*last_load_header;
 	Elf64_Off	last_load_header_offset;
 	Elf64_Addr	original_entry_point;
+	Elf64_Addr	stub_vaddr;
+	Elf64_Off	stub_poffset;
+	// size_t		new_file_total_size;
 }	t_content;
 
 typedef struct s_payload

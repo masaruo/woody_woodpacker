@@ -7,15 +7,15 @@ ssize_t	write_to_fd(int dst_fd, char *src, size_t len)
 {
 	ssize_t	total_written = 0;
 	ssize_t	bytes_written;
-	size_t	loc = 0;
 
-	while (total_written < len)
+	while (total_written < (ssize_t) len)
 	{
 		bytes_written = write(dst_fd, src + total_written, len -total_written);
 		if (bytes_written == -1)
 			return (-1);
 		total_written += bytes_written;
 	}
+	return (total_written);
 }
 
 // int	copy_file(int dst, int src)
