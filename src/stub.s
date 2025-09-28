@@ -1,14 +1,13 @@
 BITS 64
 default rel
 
-%include "./src/rc4.s"
 
 ; registers roles
 ; r12 = base_address ASLR
 ; r13 = executable_size
 ; r14 = executable_runtime_address
 ; r15 = payload_start_address
-; r8w = decrypt key value
+
 
 ; define seciton for offsets
 %define executable_addr 0
@@ -21,7 +20,7 @@ default rel
 section .text
 
 _start:
-	PROLOGUE
+	mov		rbx, rsp
 	lea		r12, [rel _start]					; runtime address of the stub
 	lea		r15, [rel _start + STUB_SIZE]		; points to payload
 	mov		rax, [r15 + stub_vaddr]				; stub's virtual addr
@@ -29,6 +28,9 @@ _start:
 	mov		r14, [r15 + executable_addr]		; vaddr of executable section
 	add		r14, r12							; runtime addr of executable section (vaddr + base_address)
 	mov		r13, [r15 + executable_size]		; executable_size
+	jmp		decrypt
+
+%include "./src/rc4.s"							; location important!
 
 decrypt:
 	; void init_state(unsigned char *rdi, size_t rsi)
@@ -49,29 +51,27 @@ decrypt:
 	call rc4
 
 goto_OEP:
-	mov    rax, [r15 + original_entry_point]		; OEP vaddr
-	add    rax, r12									; actual OEP = vaddr + base_addr
-	push	rax
-	call greeting
-	pop		rax
-	POP_CALLEE_SAVED
-	EPILOGUE
-	jmp rax									; jmp to OEP
-
-; --- Function to print a greeting ---
-greeting:
-	PROLOGUE
-	PUSH_CALLEE_SAVED
-
+	; greeting
 	mov    rax, 1                            ; WRITE
 	mov    rdi, 1                            ; STDOUT
 	lea    rsi, [rel greetings_data]        ; STR
 	mov    rdx, 14                            ; SIZE
 	syscall
 
-	POP_CALLEE_SAVED
-	EPILOGUE
-	ret
+	mov    rax, [r15 + original_entry_point]		; OEP vaddr
+	add    rax, r12									; actual OEP = vaddr + base_addr
+
+	mov rsp, rbx
+	;push qword exit_stub
+	lea	rdi, [rel exit_stub]
+	add rdi, r12
+	push rdi
+	jmp rax									; jmp to OEP
+
+exit_stub:
+	mov	rax, 60								; exit
+	xor rdi, rdi							; exit code 0
+	syscall
 
 ; --- Data used by the greeting function ---
 greetings_data:

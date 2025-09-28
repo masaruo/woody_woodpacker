@@ -29,16 +29,16 @@ int packer(char const * const file_name)
 	int res = munmap(data.head, data.len);
 	if (res == -1)
 	{
-		//todo error
+		free(woody.head);
 	}
 
 	int new_fd = open("woody", O_WRONLY | O_TRUNC | O_CREAT, 0777);
 	if (new_fd == -1)
 	{
-		perror("");
+		free(woody.head);
+		perror("failed to open woody to write.");
 		return (1);
 	}
-
 	write_to_fd(new_fd, woody.head, woody.len);
 	free(woody.head);
 	close(new_fd);
