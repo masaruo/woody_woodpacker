@@ -23,10 +23,9 @@ int packer(char const * const file_name)
 
 	generate_key(key, KEYSIZE);
 	encrypt(&data, key);
-	woody = create_woody(&data, key);
 
 	// woody = create_woody(&data);
-	woody = create_packed_file(&data);
+	woody = create_packed_file(&data, key);
 	int res = munmap(data.head, data.len);
 	if (res == -1)
 	{
@@ -43,7 +42,6 @@ int packer(char const * const file_name)
 	write_to_fd(new_fd, woody.head, woody.len);
 	free(woody.head);
 	close(new_fd);
-	free(woody.head);
 	return (0);
 }
 

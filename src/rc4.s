@@ -1,18 +1,53 @@
 BITS 64
 default rel
 
-; get keyword
+; prologue
+%macro PROLOGUE 0
+	push rbp
+	mov rbp, rsp
+%endmacro
+
+; epilogue
+%macro EPILOGUE 0
+	mov rsp, rbp
+	pop rbp
+%endmacro
+
+; push callee-saved non volative registers
+%macro PUSH_CALLEE_SAVED 0
+	push rbx
+	push r12
+	push r13
+	push r14
+	push r15
+%endmacro
+
+; pop callee-saved non volative registers
+%macro POP_CALLEE_SAVED 0
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+%endmacro
+
 
 ; void swap(unsigned char *rdi, unsigned char *rsi)
 swap:
+	PROLOGUE
+	PUSH_CALLEE_SAVED
 	mov al, [rdi]
 	mov cl, [rsi]
 	mov [rdi], cl
 	mov [rsi], al
+	POP_CALLEE_SAVED
+	EPILOGUE
 	ret
 
 ; void init_state(unsigned char *rdi, size_t rsi)
 init_state:
+	PROLOGUE
+	PUSH_CALLEE_SAVED
 	xor rcx, rcx
 .loop:
 	cmp rcx, rsi
@@ -20,22 +55,21 @@ init_state:
 	mov byte [rdi + rcx], cl
 	inc rcx
 	jmp .loop
-
 .end:
+	POP_CALLEE_SAVED
+	EPILOGUE
 	ret
 
 ; size_t modulo(size_t rdi, size_t rsi)
 modulo:
-	push rbp
-	mov rbp, rsp
-
+	PROLOGUE
+	PUSH_CALLEE_SAVED
 	xor rdx, rdx
 	mov rax, rdi
 	div rsi
 	mov rax, rdx
-
-	mov rsp, rbp
-	pop rbp
+	POP_CALLEE_SAVED
+	EPILOGUE
 	ret
 
 %define N 256
@@ -44,10 +78,8 @@ modulo:
 ; r8 = key, r9 = state, r10 = len, r11 = i, r12 = j, r13 = tmp
 
 ksa:
-	push rbp
-	mov rbp, rsp
-	push r12
-	push r13
+	PROLOGUE
+	PUSH_CALLEE_SAVED
 
 	mov r8, rdi
 	mov r9, rsi
@@ -87,20 +119,15 @@ ksa:
 	jmp .loop
 
 .end:
-	pop r13
-	pop r12
-	mov rsp, rbp
-	pop rbp
+	POP_CALLEE_SAVED
+	EPILOGUE
 	ret
 
 ; void	rc4(unsigned char *state, char *str, size_t len)
 ; r8 = state, r9 = str, r10 = len, r11 = i, r12 = j, r13 = n, r14 = seed
 rc4:
-	push rbp
-	mov rbp, rsp
-	push r12
-	push r13
-	push r14
+	PROLOGUE
+	PUSH_CALLEE_SAVED
 
 	xor r11, r11
 	xor r12, r12
@@ -115,7 +142,7 @@ rc4:
 
 .loop:
 	cmp r13, r10
-	jae .end; je?????
+	jae .end
 
 	; i = (i + 1) % N;
 	add r11, 1
@@ -154,10 +181,7 @@ rc4:
 	jmp .loop
 
 .end:
-	pop r14
-	pop r13
-	pop r12
-	mov rsp, rbp
-	pop rbp
+	POP_CALLEE_SAVED
+	EPILOGUE
 	ret
 

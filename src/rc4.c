@@ -23,13 +23,15 @@ void	generate_key(char *key, size_t len)
 
 	ssize_t	readBytes = read(fd, key, len);
 	close(fd);
-	if (readBytes < 0 || readBytes != len)
+	if (readBytes < 0 || readBytes != (ssize_t)len)
+	{
 		perror_exit(1, "cannot read random number");
+	}
 
-		for (int i = 0; i < len; i++)
-		{
-			key[i] = charset[key[i] % charset_size];
-		}
+	for (size_t i = 0; i < len; i++)
+	{
+		key[i] = charset[key[i] % charset_size];
+	}
 
 	ft_putstr_fd("Key_value: ", STDOUT_FILENO);
 	write(STDOUT_FILENO, key, len);
@@ -65,7 +67,7 @@ void	ksa(char *key, unsigned char *state, size_t len)
 	}
 }
 
-void	rc4(unsigned char *state, char *str, size_t len)
+void	rc4(unsigned char *state, char *exec, size_t len)
 {
 	size_t	i = 0;
 	size_t	j = 0;
@@ -78,7 +80,7 @@ void	rc4(unsigned char *state, char *str, size_t len)
 		j = (j + state[i]) % N;
 		swap(&state[i], &state[j]);
 		seed = state[(state[i] + state[j]) % N];
-		str[n] ^= seed;
+		exec[n] ^= seed;
 		n++;
 	}
 }
@@ -87,7 +89,7 @@ void	encrypt(t_content *content, char *key)
 {
 	unsigned char	state[N];
 	Elf64_Off const	offset = content->executable_header->p_offset;
-	size_t const	len = content->executable_header->p_filesz;
+	size_t const	len = content->executable_header->p_memsz;
 
 	init_state(state, N);
 	ksa(key, state, KEYSIZE);

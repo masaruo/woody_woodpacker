@@ -16,7 +16,6 @@ typedef struct s_content
 	Elf64_Addr	original_entry_point;
 	Elf64_Addr	stub_vaddr;
 	Elf64_Off	stub_poffset;
-	// size_t		new_file_total_size;
 }	t_content;
 
 typedef struct s_payload
@@ -25,7 +24,7 @@ typedef struct s_payload
 	uint64_t	executable_segment_size;
 	uint64_t	original_entry_point;
 	uint64_t	stub_vaddr;
-	char		key[16];//todo KEYSIZE
+	char		key[16];
 }	t_payload;
 
 typedef struct s_file

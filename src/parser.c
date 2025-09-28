@@ -7,7 +7,6 @@
 #include "woody.h"
 #include "utility.h"
 #include "libft.h"
-// #include "stub.h"
 
 static bool	is_valid_elf_eident(unsigned char e_ident[])
 {
