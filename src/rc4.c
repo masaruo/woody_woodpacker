@@ -89,7 +89,7 @@ void	encrypt(t_content *content, char *key)
 {
 	unsigned char	state[N];
 	Elf64_Off const	offset = content->executable_header->p_offset;
-	size_t const	len = content->executable_header->p_memsz;
+	size_t const	len = content->executable_header->p_filesz;
 
 	init_state(state, N);
 	ksa(key, state, KEYSIZE);

@@ -1,13 +1,11 @@
 BITS 64
 default rel
 
-
 ; registers roles
 ; r12 = base_address ASLR
 ; r13 = executable_size
 ; r14 = executable_runtime_address
 ; r15 = payload_start_address
-
 
 ; define seciton for offsets
 %define executable_addr 0
@@ -20,7 +18,7 @@ default rel
 section .text
 
 _start:
-	mov		rbx, rsp
+	mov		rbp, rsp
 	lea		r12, [rel _start]					; runtime address of the stub
 	lea		r15, [rel _start + STUB_SIZE]		; points to payload
 	mov		rax, [r15 + stub_vaddr]				; stub's virtual addr
@@ -61,21 +59,13 @@ goto_OEP:
 	mov    rax, [r15 + original_entry_point]		; OEP vaddr
 	add    rax, r12									; actual OEP = vaddr + base_addr
 
-	mov rsp, rbx
-	;push qword exit_stub
-	lea	rdi, [rel exit_stub]
-	add rdi, r12
-	push rdi
+	mov rsp, rbp
 	jmp rax									; jmp to OEP
-
-exit_stub:
-	mov	rax, 60								; exit
-	xor rdi, rdi							; exit code 0
-	syscall
 
 ; --- Data used by the greeting function ---
 greetings_data:
 	db "....WOODY....", 10; 10 = NL
+
 state:
 	times 256 db 0
 

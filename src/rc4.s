@@ -20,10 +20,12 @@ default rel
 	push r13
 	push r14
 	push r15
+	sub	rsp, 8
 %endmacro
 
 ; pop callee-saved non volative registers
 %macro POP_CALLEE_SAVED 0
+	add rsp, 8
 	pop r15
 	pop r14
 	pop r13

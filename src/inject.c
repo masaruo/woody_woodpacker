@@ -7,7 +7,7 @@
 static void	create_payload(t_content const * const content, t_payload *payload,char *key)
 {
 	payload->executable_segment_addr = content->executable_header->p_vaddr;
-	payload->executable_segment_size = content->executable_header->p_memsz;
+	payload->executable_segment_size = content->executable_header->p_filesz;//? memsz?
 	payload->original_entry_point = content->original_entry_point;
 	payload->stub_vaddr = content->stub_vaddr;
 	for (size_t i = 0; i < KEYSIZE; i++)
