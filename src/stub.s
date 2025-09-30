@@ -14,11 +14,15 @@ default rel
 %define stub_vaddr 24
 %define key_offset 32
 %define STUB_SIZE (end_of_stub - _start)
+%define STATE 264
 
 section .text
 
 _start:
+	;mov		rbp, rsp
+	push	rbp
 	mov		rbp, rsp
+	sub		rsp, STATE
 	lea		r12, [rel _start]					; runtime address of the stub
 	lea		r15, [rel _start + STUB_SIZE]		; points to payload
 	mov		rax, [r15 + stub_vaddr]				; stub's virtual addr
@@ -32,18 +36,18 @@ _start:
 
 decrypt:
 	; void init_state(unsigned char *rdi, size_t rsi)
-	lea rdi, [rel state]
+	lea rdi, [rbp - STATE]
 	mov rsi, 256
 	call init_state
 
 	; void	ksa(char *key[rdi], unsigned char *state[rsi], size_t len[rdx])
 	lea rdi, [r15 + key_offset]
-	lea rsi, [rel state]
+	lea rsi, [rbp - STATE]
 	mov rdx, 16
 	call ksa
 
 	; void	rc4(unsigned char *state, char *str, size_t len)
-	lea rdi, [rel state]
+	lea rdi, [rbp - STATE]
 	mov rsi, r14
 	mov rdx, r13
 	call rc4
@@ -59,14 +63,14 @@ goto_OEP:
 	mov    rax, [r15 + original_entry_point]		; OEP vaddr
 	add    rax, r12									; actual OEP = vaddr + base_addr
 
-	mov rsp, rbp
+	leave
 	jmp rax									; jmp to OEP
 
 ; --- Data used by the greeting function ---
 greetings_data:
 	db "....WOODY....", 10; 10 = NL
 
-state:
-	times 256 db 0
+;state:
+	;times 256 db 0
 
 end_of_stub:
