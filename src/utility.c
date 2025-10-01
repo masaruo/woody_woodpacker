@@ -1,7 +1,6 @@
-#include <unistd.h>
-#include <stdbool.h>
+#include <unistd.h>//write
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h>//exit
 
 ssize_t	write_to_fd(int dst_fd, char *src, size_t len)
 {
@@ -20,6 +19,6 @@ ssize_t	write_to_fd(int dst_fd, char *src, size_t len)
 
 void	perror_exit(int exit_code, char *msg)
 {
-	perror(msg);
+	dprintf(STDERR_FILENO, "ERROR: %s\n", msg);
 	exit(exit_code);
 }
