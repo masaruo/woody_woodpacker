@@ -10,7 +10,6 @@ OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 DEP := $(SRC:%.c=$(OBJDIR)/%.d)
 
 vpath %.c ./src
-vpath %.s ./src
 
 ifeq ($(DEBUG), true)
 	CFLAGS += -ggdb -O0 -fsanitize=address,undefined
@@ -74,4 +73,4 @@ test: fclean
 
 -include $(DEP)
 
-.PHONY: all clean fclean re debug valgrind
+.PHONY: all clean fclean re debug valgrind test

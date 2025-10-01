@@ -1,9 +1,7 @@
 #include <elf.h>
-#include <stddef.h>
-#include <fcntl.h>
+#include <fcntl.h>//open
 #include <sys/mman.h>
-#include <unistd.h>
-
+#include <unistd.h>//ssize_t
 #include "woody.h"
 #include "utility.h"
 #include "libft.h"
@@ -61,7 +59,7 @@ Elf64_Addr	get_stub_vaddr(Elf64_Phdr *last_load_header)
 	Elf64_Addr	vaddr = 0;
 	uint64_t	page_size = 0x1000;
 
-	// vaddr = (max_vaddr_end + page_size - 1) & ~(page_size - 1);//? what are they doing?
+	// vaddr = (max_vaddr_end + page_size - 1) & ~(page_size - 1);//* alternative way
 	vaddr = (max_vaddr_end + page_size - 1) / page_size * page_size;
 	return (vaddr);
 }

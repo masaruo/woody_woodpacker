@@ -2,12 +2,12 @@
 #include "stub.h"
 #include "libft.h"
 #include "utility.h"
-#include "rc4.h"
+#include "rc4.h"//KEYSIZE
 
 static void	create_payload(t_content const * const content, t_payload *payload,char *key)
 {
 	payload->executable_segment_addr = content->executable_header->p_vaddr;
-	payload->executable_segment_size = content->executable_header->p_filesz;//? memsz?
+	payload->executable_segment_size = content->executable_header->p_filesz;
 	payload->original_entry_point = content->original_entry_point;
 	payload->stub_vaddr = content->stub_vaddr;
 	for (size_t i = 0; i < KEYSIZE; i++)
@@ -44,9 +44,6 @@ static Elf64_Phdr	*create_new_phdr(t_content *content, size_t new_phdr_offset)
 	stub_header.p_filesz = (new_phdr_offset + new_size) - content->stub_poffset;
 	stub_header.p_memsz = (new_phdr_offset + new_size) - content->stub_poffset;
 	stub_header.p_align = 0x1000;
-
-	printf("DEBUG: stub_poffset=0x%zx, new_phoff=0x%zx, new_size=0x%zx\n",
-       content->stub_poffset, new_phdr_offset, new_size);//! delete
 
 	ft_memmove(header_table, content->head + content->elf_header->e_phoff, original_size);
 	ft_memmove(&header_table[content->elf_header->e_phnum], &stub_header, sizeof(Elf64_Phdr));
@@ -88,7 +85,7 @@ t_file	create_packed_file(t_content *content, char *key)
 	create_payload(content, &payload, key);
 	new_file.head = ft_calloc(1, new_file_total_size);
 	if (!new_file.head)
-	perror_exit(1, "failed to create new file.");
+		perror_exit(1, "failed to create new file.");
 
 	ft_memmove(new_file.head, content->head, content->len);
 	ft_memmove(new_file.head + content->stub_poffset, __obj_stub_bin, __obj_stub_bin_len);

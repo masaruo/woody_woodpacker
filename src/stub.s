@@ -14,7 +14,6 @@ default rel
 %define stub_vaddr 24
 %define key_offset 32
 %define STUB_SIZE (end_of_stub - _start)
-;%define STATE 256
 
 section .text
 _start:
@@ -25,35 +24,39 @@ _start:
 	mov		r14, [r15 + executable_addr]		; vaddr of executable section
 	add		r14, r12							; runtime addr of executable section (vaddr + base_address)
 	mov		r13, [r15 + executable_size]		; executable_size
-	jmp		goto_OEP
+	jmp		decrypt
 
 %include "./src/rc4.s"							; location important!
 
 decrypt:
 	; void init_state(unsigned char *rdi, size_t rsi)
-	lea rdi, [rbp - STATE]
+	lea rdi, [rel STATE]
 	mov rsi, 256
 	call init_state
 
 	; void	ksa(char *key[rdi], unsigned char *state[rsi], size_t len[rdx])
+	PUSH_VOLATILE_REG
 	lea rdi, [r15 + key_offset]
-	lea rsi, [rbp - STATE]
+	lea rsi, [rel STATE]
 	mov rdx, 16
 	call ksa
+	POP_VOLATILE_REG
 
 	; void	rc4(unsigned char *state, char *str, size_t len)
-	lea rdi, [rbp - STATE]
+	PUSH_VOLATILE_REG
+	lea rdi, [rel STATE]
 	mov rsi, r14
 	mov rdx, r13
-	;call rc4
+	call rc4
+	POP_VOLATILE_REG
 
 goto_OEP:
-	; greeting
+	; --- print ....WOODY... ---
 	PUSH_VOLATILE_REG
-	mov    rax, 1                            ; WRITE
-	mov    rdi, 1                            ; STDOUT
-	lea    rsi, [rel GREETING]        ; STR
-	mov    rdx, 14                            ; SIZE
+	mov	rax, 1					; WRITE
+	mov	rdi, 1					; STDOUT
+	lea	rsi, [rel GREETING]		; STRING
+	mov	rdx, 14					; SIZE
 	syscall
 	POP_VOLATILE_REG
 
@@ -63,9 +66,10 @@ goto_OEP:
 
 ; --- Data used by the greeting function ---
 GREETING:
-	db "....WOODY....", 10; 10 = NL
+	db "....WOODY....", 10					; 10 = ascii's new line
 
+; --- STATE used by the RC4 ---
 STATE:
-	times 256 db 0
+	times 256 db 0							; 256 bytes 0
 
 end_of_stub:

@@ -18,23 +18,6 @@ ssize_t	write_to_fd(int dst_fd, char *src, size_t len)
 	return (total_written);
 }
 
-// int	copy_file(int dst, int src)
-// {
-// 	char	buf[1024];
-// 	ssize_t	byte_read;
-
-// 	while ((byte_read = read(src, buf, sizeof(buf))) > 0)
-// 	{
-// 		if (write_all(dst, buf, byte_read) == -1)
-// 		{
-// 			return (-1);
-// 		}
-// 	}
-// 	if (byte_read == -1)
-// 		return (-1);
-// 	return(0);
-// }
-
 void	perror_exit(int exit_code, char *msg)
 {
 	perror(msg);
