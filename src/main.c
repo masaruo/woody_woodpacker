@@ -22,7 +22,7 @@ int packer(char const * const file_name)
 	// encoder(&data);
 
 	generate_key(key, KEYSIZE);
-	encrypt(&data, key);
+	// encrypt(&data, key);
 
 	// woody = create_woody(&data);
 	woody = create_packed_file(&data, key);

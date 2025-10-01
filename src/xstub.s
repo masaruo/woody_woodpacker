@@ -1,6 +1,8 @@
 BITS 64
 default rel
 
+
+
 ; registers roles
 ; r12 = base_address ASLR
 ; r13 = executable_size
@@ -13,59 +15,62 @@ default rel
 %define original_entry_point 16
 %define stub_vaddr 24
 %define key_offset 32
-%define STUB_SIZE (end_of_stub - _start)
-;%define STATE 256
+%define STUB_SIZE (end_of_stub - start_of_stub)
+%define STATE 256
 
 section .text
-_start:
-	lea		r12, [rel _start]					; runtime address of the stub
-	lea		r15, [rel _start + STUB_SIZE]		; points to payload
+
+start_of_stub:
+	push	rbp
+	mov		rbp, rsp
+	sub		rsp, STATE
+	lea		r12, [rel start_of_stub]					; runtime address of the stub
+	lea		r15, [rel start_of_stub + STUB_SIZE]		; points to payload
 	mov		rax, [r15 + stub_vaddr]				; stub's virtual addr
 	sub		r12, rax							; ASLR's base_addr = runtime address - virtual addr
 	mov		r14, [r15 + executable_addr]		; vaddr of executable section
 	add		r14, r12							; runtime addr of executable section (vaddr + base_address)
 	mov		r13, [r15 + executable_size]		; executable_size
+	;jmp		decrypt
 	jmp		goto_OEP
 
-%include "./src/rc4.s"							; location important!
+;%include "./src/rc4.s"							; location important!
 
 decrypt:
-	; void init_state(unsigned char *rdi, size_t rsi)
+	;void init_state(unsigned char *rdi, size_t rsi)
 	lea rdi, [rbp - STATE]
 	mov rsi, 256
 	call init_state
 
 	; void	ksa(char *key[rdi], unsigned char *state[rsi], size_t len[rdx])
-	lea rdi, [r15 + key_offset]
-	lea rsi, [rbp - STATE]
-	mov rdx, 16
-	call ksa
+	;lea rdi, [r15 + key_offset]
+	;lea rsi, [rbp - STATE]
+	;mov rdx, 16
+	;call ksa
 
 	; void	rc4(unsigned char *state, char *str, size_t len)
-	lea rdi, [rbp - STATE]
-	mov rsi, r14
-	mov rdx, r13
+	;lea rdi, [rbp - STATE]
+	;mov rsi, r14
+	;mov rdx, r13
 	;call rc4
 
 goto_OEP:
 	; greeting
-	PUSH_VOLATILE_REG
 	mov    rax, 1                            ; WRITE
 	mov    rdi, 1                            ; STDOUT
-	lea    rsi, [rel GREETING]        ; STR
+	lea    rsi, [rel greetings_data]        ; STR
 	mov    rdx, 14                            ; SIZE
 	syscall
-	POP_VOLATILE_REG
 
 	mov    rax, [r15 + original_entry_point]		; OEP vaddr
 	add    rax, r12									; actual OEP = vaddr + base_addr
+
+	;add	rsp, 8
+	leave
 	jmp rax									; jmp to OEP
 
 ; --- Data used by the greeting function ---
-GREETING:
+greetings_data:
 	db "....WOODY....", 10; 10 = NL
-
-STATE:
-	times 256 db 0
 
 end_of_stub:
