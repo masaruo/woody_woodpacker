@@ -17,6 +17,3 @@ make executable encrypted to avoid reverse engineering (such as virus software) 
 ## limitations
 1. only compatible to X86-64
 1. only little endien
-
-## refrence
-アナライジング・マルウェア
