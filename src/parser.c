@@ -77,7 +77,7 @@ static int	fill_content(t_content *content)
 
 	for (size_t i = 0; i < phnum; i++)
 	{
-		Elf64_Phdr			*crnt;
+		Elf64_Phdr	*crnt;
 		Elf64_Off	crnt_offset = phdr_offset + (i * phentsize);
 		if (crnt_offset + phentsize > content->len)
 			return (-1);
@@ -116,7 +116,7 @@ t_content	get_original_content(char const * const file_name)
 	if (fd == -1)
 		perror_exit(1, "open error");
 	len = lseek(fd, 0, SEEK_END);
-	if (len == -1)
+	if (len <= 0)
 		perror_exit(1, "lseek eror");
 	original.len = len;
 		original.head = mmap(NULL, (size_t)original.len, PROT_WRITE | PROT_READ, MAP_PRIVATE, fd, 0);
