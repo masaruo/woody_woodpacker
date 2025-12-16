@@ -85,11 +85,31 @@ void	rc4(unsigned char *state, char *exec, size_t len)
 	}
 }
 
+static bool	is_header_overlap(t_content const *content, Elf64_Off offset)
+{
+	Elf64_Off const	seg_start = offset;
+	Elf64_Off const	seg_end = content->executable_header->p_filesz;
+
+	if (offset < sizeof(Elf64_Ehdr))
+		return (true);
+
+	Elf64_Off	phdr_start = content->elf_header->e_phoff;
+	size_t		phdr_size = content->elf_header->e_phnum * content->elf_header->e_phentsize;
+	Elf64_Off	phdr_end = phdr_start + phdr_size;
+	if (seg_start < phdr_end && seg_end > phdr_start)
+		return (true);
+	
+	return (false);
+}
+
 void	encrypt(t_content *content, char *key)
 {
 	unsigned char	state[N];
 	Elf64_Off const	offset = content->executable_header->p_offset;
 	size_t const	len = content->executable_header->p_filesz;
+
+	if (is_header_overlap(content, offset))
+		perror_exit(1, "Load segment overlaps with the headers");
 
 	init_state(state, N);
 	ksa(key, state, KEYSIZE);
