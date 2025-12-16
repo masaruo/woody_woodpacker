@@ -30,9 +30,11 @@ _start:
 
 decrypt:
 	; void init_state(unsigned char *rdi, size_t rsi)
+	PUSH_VOLATILE_REG
 	lea rdi, [rel STATE]
 	mov rsi, 256
 	call init_state
+	POP_VOLATILE_REG
 
 	; void	ksa(char *key[rdi], unsigned char *state[rsi], size_t len[rdx])
 	PUSH_VOLATILE_REG

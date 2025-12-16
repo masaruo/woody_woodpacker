@@ -28,6 +28,8 @@ static bool assert_elf_header(Elf64_Ehdr const * const header)
 		return (false);
 	if (header->e_version != EV_CURRENT)
 		return (false);
+	if (header->e_machine != EM_X86_64)
+		return (false);
 	return (true);
 }
 
