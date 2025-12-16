@@ -6,7 +6,7 @@
 /*   By: mogawa <mogawa@student.42tokyo.jp>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/11 16:40:49 by mogawa            #+#    #+#             */
-/*   Updated: 2023/12/13 10:30:32 by mogawa           ###   ########.fr       */
+/*   Updated: 2025/12/16 18:43:32 by mogawa           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,3 +102,4 @@ void	*ft_lstcalloc(size_t count, size_t size, t_list **head);
 void	ft_free_lstcalloc(t_list **head);
 
 #endif
+
