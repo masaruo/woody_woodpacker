@@ -79,7 +79,7 @@ static int	fill_content(t_content *content)
 
 	for (size_t i = 0; i < phnum; i++)
 	{
-		Elf64_Phdr			*crnt;
+		Elf64_Phdr	*crnt;
 		Elf64_Off	crnt_offset = phdr_offset + (i * phentsize);
 		if (crnt_offset + phentsize > content->len)
 			return (-1);
@@ -87,16 +87,21 @@ static int	fill_content(t_content *content)
 		crnt = (Elf64_Phdr*)(content->head + crnt_offset);
 		if (crnt->p_type == PT_LOAD)
 		{
-			if (crnt->p_flags & PF_X && crnt->p_flags & PF_R)
+			Elf64_Addr	seg_start = crnt->p_vaddr;
+			Elf64_Addr	seg_end = seg_start + crnt->p_memsz;
+			if (crnt->p_flags & PF_X)
 			{
-				content->executable_header = crnt;
-				content->executable_header->p_flags |= PF_W;// in place decryption has to be writable
-				content->executable_header_offset = crnt_offset;
+				Elf64_Addr	oep = content->original_entry_point;
+				if (seg_start <= oep && oep < seg_end)
+				{
+					content->executable_header = crnt;
+					content->executable_header->p_flags |= PF_W;// in place decryption has to be writable
+					content->executable_header_offset = crnt_offset;
+				}
 			}
-			Elf64_Off	end_addr = crnt->p_vaddr + crnt->p_memsz;
-			if (end_addr > max_addr)
+			if (seg_end > max_addr)
 			{
-				max_addr = end_addr;
+				max_addr = seg_end;
 				content->last_load_header = crnt;
 				content->last_load_header_offset = crnt_offset;
 			}
@@ -118,7 +123,7 @@ t_content	get_original_content(char const * const file_name)
 	if (fd == -1)
 		perror_exit(1, "open error");
 	len = lseek(fd, 0, SEEK_END);
-	if (len == -1)
+	if (len <= 0)
 		perror_exit(1, "lseek eror");
 	original.len = len;
 		original.head = mmap(NULL, (size_t)original.len, PROT_WRITE | PROT_READ, MAP_PRIVATE, fd, 0);

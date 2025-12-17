@@ -64,6 +64,14 @@ goto_OEP:
 
 	mov    rax, [r15 + original_entry_point]		; OEP vaddr
 	add    rax, r12									; actual OEP = vaddr + base_addr
+
+	; Clear registers used by stub to restore "virgin" state
+	;xor	r12, r12
+	;xor r13, r13
+	;xor r14, r14
+	;xor r15, r15
+	;xor rbx, rbx
+
 	jmp rax									; jmp to OEP
 
 ; --- Data used by the greeting function ---
