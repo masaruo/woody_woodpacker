@@ -85,18 +85,21 @@ static int	fill_content(t_content *content)
 			return (-1);
 
 		crnt = (Elf64_Phdr*)(content->head + crnt_offset);
-		if (crnt->p_type == PT_LOAD)
+		if (crnt->p_type == PT_LOAD && (crnt->p_flags & PF_X))
 		{
-			if (crnt->p_flags & PF_X && crnt->p_flags & PF_R)
+			Elf64_Addr	seg_start = crnt->p_vaddr;
+			Elf64_Addr	seg_end = seg_start + crnt->p_memsz;
+			Elf64_Addr	oep = content->original_entry_point;
+			if (seg_start <= oep && oep < seg_end)
 			{
 				content->executable_header = crnt;
 				content->executable_header->p_flags |= PF_W;// in place decryption has to be writable
 				content->executable_header_offset = crnt_offset;
 			}
-			Elf64_Off	end_addr = crnt->p_vaddr + crnt->p_memsz;
-			if (end_addr > max_addr)
+			// Elf64_Off	end_addr = crnt->p_vaddr + crnt->p_memsz;
+			if (seg_end > max_addr)
 			{
-				max_addr = end_addr;
+				max_addr = seg_end;
 				content->last_load_header = crnt;
 				content->last_load_header_offset = crnt_offset;
 			}

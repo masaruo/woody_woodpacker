@@ -27,10 +27,10 @@ void	generate_key(char *key, size_t len)
 	{
 		perror_exit(1, "cannot read random number");
 	}
-
+	unsigned char *ukey = (unsigned char *)key;
 	for (size_t i = 0; i < len; i++)
 	{
-		key[i] = charset[key[i] % charset_size];
+		key[i] = charset[ukey[i] % charset_size];
 	}
 
 	ft_putstr_fd("Key_value: ", STDOUT_FILENO);
@@ -59,9 +59,11 @@ void	ksa(char *key, unsigned char *state, size_t len)
 {
 	size_t	i = 0;
 	size_t	j = 0;
+	unsigned char *ukey = (unsigned char*)key;
+
 	while (i < N)
 	{
-		j = (j + state[i] + key[i % len]) % N;
+		j = (j + state[i] + ukey[i % len]) % N;
 		swap(&state[i], &state[j]);
 		i++;
 	}
@@ -73,6 +75,7 @@ void	rc4(unsigned char *state, char *exec, size_t len)
 	size_t	j = 0;
 	size_t	n = 0;
 	size_t	seed = 0;
+	unsigned char *uexec = (unsigned char *)exec;
 
 	while (n < len)
 	{
@@ -80,7 +83,7 @@ void	rc4(unsigned char *state, char *exec, size_t len)
 		j = (j + state[i]) % N;
 		swap(&state[i], &state[j]);
 		seed = state[(state[i] + state[j]) % N];
-		exec[n] ^= seed;
+		uexec[n] ^= seed;
 		n++;
 	}
 }
@@ -88,7 +91,7 @@ void	rc4(unsigned char *state, char *exec, size_t len)
 static bool	is_header_overlap(t_content const *content, Elf64_Off offset)
 {
 	Elf64_Off const	seg_start = offset;
-	Elf64_Off const	seg_end = content->executable_header->p_filesz;
+	Elf64_Off const	seg_end = offset + content->executable_header->p_filesz;
 
 	if (offset < sizeof(Elf64_Ehdr))
 		return (true);
@@ -98,7 +101,7 @@ static bool	is_header_overlap(t_content const *content, Elf64_Off offset)
 	Elf64_Off	phdr_end = phdr_start + phdr_size;
 	if (seg_start < phdr_end && seg_end > phdr_start)
 		return (true);
-	
+
 	return (false);
 }
 
