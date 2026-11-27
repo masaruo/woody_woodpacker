@@ -1,23 +1,26 @@
+.PHONY: all clean fclean re debug valgrind test
+.DELETE_ON_ERROR:
+
 NAME := woody_woodpacker
 CC := cc
-CPPFLAGS := -I./include -I./libft/include
+OBJDIR := ./obj
+CPPFLAGS := -I./include -I./libft/include -I$(OBJDIR)
 CFLAGS := -Wall -Wextra -MMD -MP
 LDFLAGS :=
 LIBFT := ./libft/libft.a
 SRC := main.c parser.c utility.c inject.c rc4.c
-OBJDIR := ./obj
 OBJ := $(SRC:%.c=$(OBJDIR)/%.o)
 DEP := $(SRC:%.c=$(OBJDIR)/%.d)
+STUB_BIN := $(OBJDIR)/stub.bin
+STUB_H :=  $(OBJDIR)/stub.h
 
 vpath %.c ./src
 
 ifeq ($(DEBUG), true)
 	CFLAGS += -ggdb -O0 -fsanitize=address,undefined
-	ASMFLAGS += -g
 	LDFLAGS += -fsanitize=address,undefined
 else ifeq ($(VALGRIND), true)
 	CFLAGS += -ggdb -O0
-	ASMFLAGS += -g
 else
 	CFLAGS += -Werror -pedantic
 endif
@@ -28,8 +31,7 @@ $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(NAME): $(OBJ) $(LIBFT)
-	$(MAKE) stub
-	$(CC) $(LDFLAGS) $(ASM_OBJ) $(OBJ) $(LIBFT) -o $@
+	$(CC) $(LDFLAGS) $(OBJ) $(LIBFT) -o $@
 
 $(OBJDIR):
 	mkdir -p $@
@@ -46,7 +48,9 @@ fclean: clean
 	$(RM) $(NAME)
 	$(RM) woody
 
-re: fclean all
+re:
+	$(MAKE) fclean
+	$(MAKE) all
 
 debug: fclean
 	$(MAKE) DEBUG=true
@@ -54,23 +58,19 @@ debug: fclean
 valgrind: fclean
 	$(MAKE) VALGRIND=true
 
-docker:
-	docker container exec -it --user 1000 woody_woodpacker bash
+$(STUB_BIN): ./src/stub.s ./src/rc4.s | $(OBJDIR)
+	nasm -f bin ./src/stub.s -o $@
 
-submodule:
-	git submodule update --init --recursive
+$(STUB_H): $(STUB_BIN) | $(OBJDIR)
+	echo "#pragma once" > $@
+	xxd -i $(STUB_BIN) >> $@
 
-stub: | $(OBJDIR)
-	nasm -f bin ./src/stub.s -o ./obj/stub.bin
-	echo "#pragma once" > ./include/stub.h
-	xxd -i ./obj/stub.bin >> ./include/stub.h
+$(OBJDIR)/inject.o: $(STUB_H)
 
-test: fclean
-	$(MAKE) stub
+test:
+	$(MAKE) fclean
 	$(MAKE) debug
 	./woody_woodpacker resources/sample
 	./woody
 
 -include $(DEP)
-
-.PHONY: all clean fclean re debug valgrind test
