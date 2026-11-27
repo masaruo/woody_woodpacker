@@ -9,5 +9,3 @@
 !.gitignore
 !/libft
 !README.md
-!/.devcontainer
-!/.devcontainer/**/*
